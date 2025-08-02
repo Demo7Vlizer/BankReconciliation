@@ -1,0 +1,14 @@
+Date,Description,Amount,Type
+01/01/2024,Salary Credit,50000,credit
+05/01/2024,ATM Withdrawal,5000,debit
+10/01/2024,Online Payment - Amazon,2500,debit
+15/01/2024,Interest Credit,500,credit
+20/01/2024,UPI Transfer - Friend,1000,debit
+25/01/2024,Cheque Deposit,15000,credit
+30/01/2024,Utility Bill Payment,3000,debit
+02/02/2024,Salary Credit,50000,credit
+08/02/2024,ATM Withdrawal,3000,debit
+12/02/2024,Online Payment - Flipkart,1800,debit
+18/02/2024,Interest Credit,500,credit
+22/02/2024,UPI Transfer - Family,2000,debit
+28/02/2024,Cheque Deposit,12000,credit 

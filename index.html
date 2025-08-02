@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Reconciliation System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-university"></i> Bank Reconciliation System</h1>
+            <p>Compare Bank Statements with Tally Prime Data</p>
+        </header>
+
+        <div class="data-entry-section">
+            <div class="data-card">
+                <h3><i class="fas fa-file-invoice"></i> Bank Statement Data</h3>
+                <div class="table-controls">
+                    <button id="addBankRow" class="add-row-btn">
+                        <i class="fas fa-plus"></i> Add Row
+                    </button>
+                    <button id="clearBankData" class="clear-btn">
+                        <i class="fas fa-trash"></i> Clear All
+                    </button>
+                    <button id="pasteBankData" class="paste-btn">
+                        <i class="fas fa-paste"></i> Paste Data
+                    </button>
+                    <button id="downloadBankData" class="download-btn">
+                        <i class="fas fa-download"></i> Download Data
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table id="bankDataTable">
+                        <thead>
+                            <tr>
+                                <th>Date (DD/MM/YYYY)</th>
+                                <th>Amount (₹)</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="text" placeholder="01/01/2024" class="date-input"></td>
+                                <td><input type="number" placeholder="50000" class="amount-input"></td>
+                                <td>
+                                    <button class="delete-row-btn" onclick="deleteRow(this)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="data-card">
+                <h3><i class="fas fa-calculator"></i> Tally Prime Data</h3>
+                <div class="table-controls">
+                    <button id="addTallyRow" class="add-row-btn">
+                        <i class="fas fa-plus"></i> Add Row
+                    </button>
+                    <button id="clearTallyData" class="clear-btn">
+                        <i class="fas fa-trash"></i> Clear All
+                    </button>
+                    <button id="pasteTallyData" class="paste-btn">
+                        <i class="fas fa-paste"></i> Paste Data
+                    </button>
+                    <button id="downloadTallyData" class="download-btn">
+                        <i class="fas fa-download"></i> Download Data
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table id="tallyDataTable">
+                        <thead>
+                            <tr>
+                                <th>Date (DD/MM/YYYY)</th>
+                                <th>Amount (₹)</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="text" placeholder="01/01/2024" class="date-input"></td>
+                                <td><input type="number" placeholder="50000" class="amount-input"></td>
+                                <td>
+                                    <button class="delete-row-btn" onclick="deleteRow(this)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <div class="filter-controls">
+                <div class="filter-group">
+                    <label for="monthFilter">Filter by Month:</label>
+                    <select id="monthFilter">
+                        <option value="">All Months</option>
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="yearFilter">Filter by Year:</label>
+                    <select id="yearFilter">
+                        <option value="">All Years</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="amountFilter">Amount Range:</label>
+                    <input type="number" id="minAmount" placeholder="Min Amount">
+                    <input type="number" id="maxAmount" placeholder="Max Amount">
+                </div>
+            </div>
+            
+            <button id="reconcileBtn" class="reconcile-btn">
+                <i class="fas fa-sync-alt"></i> Start Reconciliation
+            </button>
+        </div>
+
+        <div class="summary-section">
+            <div class="summary-card">
+                <h3>Summary</h3>
+                <div class="summary-stats">
+                    <div class="stat">
+                        <span class="stat-number" id="totalBankTransactions">0</span>
+                        <span class="stat-label">Bank Transactions</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="totalTallyTransactions">0</span>
+                        <span class="stat-label">Tally Transactions</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="matchedTransactions">0</span>
+                        <span class="stat-label">Matched</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="unmatchedTransactions">0</span>
+                        <span class="stat-label">Unmatched</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="matched">Matched Transactions</button>
+                <button class="tab-btn" data-tab="unmatched">Unmatched Transactions</button>
+                <button class="tab-btn" data-tab="differences">Differences</button>
+            </div>
+
+            <div class="tab-content">
+                <div id="matched" class="tab-pane active">
+                    <div class="table-container">
+                        <table id="matchedTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Bank Amount</th>
+                                    <th>Tally Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="unmatched" class="tab-pane">
+                    <div class="table-container">
+                        <table id="unmatchedTable">
+                            <thead>
+                                <tr>
+                                    <th>Source</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="differences" class="tab-pane">
+                    <div class="table-container">
+                        <table id="differencesTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Bank Amount</th>
+                                    <th>Tally Amount</th>
+                                    <th>Difference</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="export-section">
+            <button id="exportBtn" class="export-btn">
+                <i class="fas fa-download"></i> Export Results
+            </button>
+        </div>
+    </div>
+
+    <!-- Paste Data Modal -->
+    <div id="pasteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Paste Data</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p><strong>Paste your data here:</strong></p>
+                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
+                    Format: Date | Amount<br>
+                    Date Formats Supported:<br>
+                    • DD/MM/YYYY (e.g., 02/04/2024)<br>
+                    • DD-MM-YYYY (e.g., 24-04-2024)<br>
+                    • DD-MMM-YY (Excel format, e.g., 02-Apr-24)<br>
+                    Supports: Tab, comma, or space separated data<br>
+                    Example: 24-04-2024 | 22606.00
+                </p>
+                <textarea id="pasteTextarea" placeholder="24-04-2024&#9;22606.00&#10;25-04-2024&#9;199195.01&#10;01-Apr-24&#9;57045.01"></textarea>
+                <div class="modal-buttons">
+                    <button id="processPasteBtn" class="process-btn">Process Data</button>
+                    <button id="cancelPasteBtn" class="cancel-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html> 
