@@ -201,6 +201,7 @@ class BankReconciliation {
                         amount: parsedAmount,
                         type: 'unknown' // No type needed
                     });
+                    console.log(`Processed: ${date} → ${this.formatDate(parsedDate)} ₹${parsedAmount}`);
                 } else {
                     console.log(`Skipping invalid row: Date="${date}" Amount="${amount}"`);
                 }
@@ -415,6 +416,9 @@ class BankReconciliation {
         const bankTransactions = [...this.bankData].sort((a, b) => a.date.getTime() - b.date.getTime());
         const tallyTransactions = [...this.tallyData].sort((a, b) => a.date.getTime() - b.date.getTime());
 
+        console.log('Bank Transactions:', bankTransactions.map(t => `${this.formatDate(t.date)} ₹${t.amount}`));
+        console.log('Tally Transactions:', tallyTransactions.map(t => `${this.formatDate(t.date)} ₹${t.amount}`));
+
         // Step 1: Match exact individual transactions
         this.matchExactTransactions(bankTransactions, tallyTransactions);
 
@@ -454,12 +458,14 @@ class BankReconciliation {
                 const tallyTransaction = tallyTransactions[j];
                 
                 if (this.isIndividualMatch(bankTransaction, tallyTransaction)) {
+                    console.log(`Exact match found: Bank ${this.formatDate(bankTransaction.date)} ₹${bankTransaction.amount} ↔ Tally ${this.formatDate(tallyTransaction.date)} ₹${tallyTransaction.amount}`);
                     this.matchedTransactions.push({
                         bankTransactions: [bankTransaction],
                         tallyTransactions: [tallyTransaction],
                         bankTotal: bankTransaction.amount,
                         tallyTotal: tallyTransaction.amount,
-                        date: bankTransaction.date,
+                        bankDate: bankTransaction.date,
+                        tallyDate: tallyTransaction.date,
                         difference: Math.abs(bankTransaction.amount - tallyTransaction.amount),
                         matchType: 'exact'
                     });
@@ -482,7 +488,8 @@ class BankReconciliation {
                         tallyTransactions: [fuzzyMatch],
                         bankTotal: bankTransaction.amount,
                         tallyTotal: fuzzyMatch.amount,
-                        date: bankTransaction.date,
+                        bankDate: bankTransaction.date,
+                        tallyDate: fuzzyMatch.date,
                         difference: Math.abs(bankTransaction.amount - fuzzyMatch.amount),
                         matchType: 'fuzzy'
                     });
@@ -513,6 +520,7 @@ class BankReconciliation {
                 const toleranceDays = this.fuzzyConfig.dateTolerance * 24 * 60 * 60 * 1000;
                 
                 if (dateDiff <= toleranceDays) {
+                    console.log(`Fuzzy match found: Bank ${this.formatDate(bankTransaction.date)} ₹${bankTransaction.amount} ↔ Tally ${this.formatDate(tallyTransaction.date)} ₹${tallyTransaction.amount}`);
                     return tallyTransaction;
                 }
             }
@@ -539,7 +547,8 @@ class BankReconciliation {
                         tallyTransactions,
                         bankTotal,
                         tallyTotal,
-                        date: bankTransactions[0].date,
+                        bankDate: bankTransactions[0].date,
+                        tallyDate: tallyTransactions[0].date,
                         difference: Math.abs(bankTotal - tallyTotal),
                         matchType: 'grouped'
                     });
@@ -584,7 +593,8 @@ class BankReconciliation {
                     tallyTransactions: matchedTallyTransactions,
                     bankTotal: bankRunningBalance,
                     tallyTotal: tallyRunningBalance,
-                    date: bankTransaction.date,
+                    bankDate: bankTransaction.date,
+                    tallyDate: tallyTransaction.date,
                     difference: Math.abs(bankRunningBalance - tallyRunningBalance),
                     matchType: 'running_balance'
                 });
@@ -728,8 +738,9 @@ class BankReconciliation {
                     matchType = 'Matched';
             }
             row.innerHTML = `
-                <td>${this.formatDate(match.date)}</td>
+                <td>${this.formatDate(match.bankDate)}</td>
                 <td>${this.formatAmount(match.bankTotal)} (${match.bankTransactions.length} transactions)</td>
+                <td>${this.formatDate(match.tallyDate)}</td>
                 <td>${this.formatAmount(match.tallyTotal)} (${match.tallyTransactions.length} transactions)</td>
                 <td class="status-matched">✓ ${matchType}</td>
             `;
@@ -772,8 +783,9 @@ class BankReconciliation {
             const row = document.createElement('tr');
             const difference = match.bankTotal - match.tallyTotal;
             row.innerHTML = `
-                <td>${this.formatDate(match.date)}</td>
+                <td>${this.formatDate(match.bankDate)}</td>
                 <td>${this.formatAmount(match.bankTotal)} (${match.bankTransactions.length} transactions)</td>
+                <td>${this.formatDate(match.tallyDate)}</td>
                 <td>${this.formatAmount(match.tallyTotal)} (${match.tallyTransactions.length} transactions)</td>
                 <td class="${difference > 0 ? 'amount-debit' : 'amount-credit'}">${this.formatAmount(Math.abs(difference))}</td>
             `;
@@ -854,9 +866,10 @@ class BankReconciliation {
         
         // Export matched transactions
         const matchedData = this.matchedTransactions.map(match => ({
-            'Date': this.formatDate(match.date),
+            'Bank Date': this.formatDate(match.bankDate),
             'Bank Total': match.bankTotal,
             'Bank Transactions': match.bankTransactions.length,
+            'Tally Date': this.formatDate(match.tallyDate),
             'Tally Total': match.tallyTotal,
             'Tally Transactions': match.tallyTransactions.length,
             'Status': 'Matched'
@@ -888,9 +901,10 @@ class BankReconciliation {
 
         // Export differences
         const differencesData = this.differences.map(match => ({
-            'Date': this.formatDate(match.date),
+            'Bank Date': this.formatDate(match.bankDate),
             'Bank Total': match.bankTotal,
             'Bank Transactions': match.bankTransactions.length,
+            'Tally Date': this.formatDate(match.tallyDate),
             'Tally Total': match.tallyTotal,
             'Tally Transactions': match.tallyTransactions.length,
             'Difference': Math.abs(match.bankTotal - match.tallyTotal)
