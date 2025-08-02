@@ -737,11 +737,36 @@ class BankReconciliation {
                 default:
                     matchType = 'Matched';
             }
+
+            // Create tooltip content for grouped transactions
+            let bankTooltip = '';
+            let tallyTooltip = '';
+            
+            if (match.matchType === 'grouped' || match.matchType === 'running_balance') {
+                // Bank transactions tooltip
+                if (match.bankTransactions.length > 1) {
+                    bankTooltip = 'Bank Transactions:\n';
+                    match.bankTransactions.forEach((transaction, index) => {
+                        bankTooltip += `${index + 1}. ${this.formatDate(transaction.date)}: ${this.formatAmount(transaction.amount)}\n`;
+                    });
+                    bankTooltip += `\nTotal: ${this.formatAmount(match.bankTotal)}`;
+                }
+
+                // Tally transactions tooltip
+                if (match.tallyTransactions.length > 1) {
+                    tallyTooltip = 'Tally Transactions:\n';
+                    match.tallyTransactions.forEach((transaction, index) => {
+                        tallyTooltip += `${index + 1}. ${this.formatDate(transaction.date)}: ${this.formatAmount(transaction.amount)}\n`;
+                    });
+                    tallyTooltip += `\nTotal: ${this.formatAmount(match.tallyTotal)}`;
+                }
+            }
+
             row.innerHTML = `
                 <td>${this.formatDate(match.bankDate)}</td>
-                <td>${this.formatAmount(match.bankTotal)} (${match.bankTransactions.length} transactions)</td>
+                <td class="${bankTooltip ? 'tooltip' : ''}" data-tooltip="${bankTooltip}">${this.formatAmount(match.bankTotal)} (${match.bankTransactions.length} transactions)</td>
                 <td>${this.formatDate(match.tallyDate)}</td>
-                <td>${this.formatAmount(match.tallyTotal)} (${match.tallyTransactions.length} transactions)</td>
+                <td class="${tallyTooltip ? 'tooltip' : ''}" data-tooltip="${tallyTooltip}">${this.formatAmount(match.tallyTotal)} (${match.tallyTransactions.length} transactions)</td>
                 <td class="status-matched">✓ ${matchType}</td>
             `;
             tbody.appendChild(row);
@@ -782,11 +807,32 @@ class BankReconciliation {
         differences.forEach(match => {
             const row = document.createElement('tr');
             const difference = match.bankTotal - match.tallyTotal;
+
+            // Create tooltip content for transactions with multiple entries
+            let bankTooltip = '';
+            let tallyTooltip = '';
+            
+            if (match.bankTransactions.length > 1) {
+                bankTooltip = 'Bank Transactions:\n';
+                match.bankTransactions.forEach((transaction, index) => {
+                    bankTooltip += `${index + 1}. ${this.formatDate(transaction.date)}: ${this.formatAmount(transaction.amount)}\n`;
+                });
+                bankTooltip += `\nTotal: ${this.formatAmount(match.bankTotal)}`;
+            }
+
+            if (match.tallyTransactions.length > 1) {
+                tallyTooltip = 'Tally Transactions:\n';
+                match.tallyTransactions.forEach((transaction, index) => {
+                    tallyTooltip += `${index + 1}. ${this.formatDate(transaction.date)}: ${this.formatAmount(transaction.amount)}\n`;
+                });
+                tallyTooltip += `\nTotal: ${this.formatAmount(match.tallyTotal)}`;
+            }
+
             row.innerHTML = `
                 <td>${this.formatDate(match.bankDate)}</td>
-                <td>${this.formatAmount(match.bankTotal)} (${match.bankTransactions.length} transactions)</td>
+                <td class="${bankTooltip ? 'tooltip' : ''}" data-tooltip="${bankTooltip}">${this.formatAmount(match.bankTotal)} (${match.bankTransactions.length} transactions)</td>
                 <td>${this.formatDate(match.tallyDate)}</td>
-                <td>${this.formatAmount(match.tallyTotal)} (${match.tallyTransactions.length} transactions)</td>
+                <td class="${tallyTooltip ? 'tooltip' : ''}" data-tooltip="${tallyTooltip}">${this.formatAmount(match.tallyTotal)} (${match.tallyTransactions.length} transactions)</td>
                 <td class="${difference > 0 ? 'amount-debit' : 'amount-credit'}">${this.formatAmount(Math.abs(difference))}</td>
             `;
             tbody.appendChild(row);
