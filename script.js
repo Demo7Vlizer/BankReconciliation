@@ -47,6 +47,15 @@ class BankReconciliation {
             this.openPasteModal('tallyDataTable');
         });
 
+        // Paste & Append data buttons
+        document.getElementById('pasteAppendBankData').addEventListener('click', () => {
+            this.openPasteModal('bankDataTable', true);
+        });
+        
+        document.getElementById('pasteAppendTallyData').addEventListener('click', () => {
+            this.openPasteModal('tallyDataTable', true);
+        });
+
         // Download data buttons
         document.getElementById('downloadBankData').addEventListener('click', () => {
             this.downloadTableData('bankDataTable', 'Bank_Statement_Data');
@@ -131,6 +140,7 @@ class BankReconciliation {
         const newRow = document.createElement('tr');
         
         newRow.innerHTML = `
+            <td class="serial-number"></td>
             <td><input type="text" placeholder="01/01/2024" class="date-input"></td>
             <td><input type="number" placeholder="50000" class="amount-input"></td>
             <td>
@@ -141,6 +151,7 @@ class BankReconciliation {
         `;
         
         tbody.appendChild(newRow);
+        this.updateSerialNumbers(tableId);
     }
 
     clearTable(tableId) {
@@ -150,6 +161,7 @@ class BankReconciliation {
         // Keep one empty row
         tbody.innerHTML = `
             <tr>
+                <td class="serial-number">1</td>
                 <td><input type="text" placeholder="01/01/2024" class="date-input"></td>
                 <td><input type="number" placeholder="50000" class="amount-input"></td>
                 <td>
@@ -161,16 +173,43 @@ class BankReconciliation {
         `;
     }
 
-    openPasteModal(tableId) {
+    updateSerialNumbers(tableId) {
+        const table = document.getElementById(tableId);
+        const tbody = table.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+        
+        rows.forEach((row, index) => {
+            const serialCell = row.querySelector('.serial-number');
+            if (serialCell) {
+                serialCell.textContent = index + 1;
+            }
+        });
+    }
+
+    openPasteModal(tableId, appendMode = false) {
         this.currentPasteTarget = tableId;
+        this.appendMode = appendMode;
         document.getElementById('pasteModal').style.display = 'block';
         document.getElementById('pasteTextarea').focus();
+        
+        // Update modal title and mode info based on mode
+        const modalTitle = document.querySelector('#pasteModal .modal-header h3');
+        const modeInfo = document.getElementById('pasteModeInfo');
+        
+        if (appendMode) {
+            modalTitle.textContent = 'Paste & Append Data';
+            modeInfo.textContent = 'Add to existing data';
+        } else {
+            modalTitle.textContent = 'Paste Data';
+            modeInfo.textContent = 'Replace existing data';
+        }
     }
 
     closePasteModal() {
         document.getElementById('pasteModal').style.display = 'none';
         document.getElementById('pasteTextarea').value = '';
         this.currentPasteTarget = null;
+        this.appendMode = false;
     }
 
     processPastedData() {
@@ -224,13 +263,16 @@ class BankReconciliation {
         const table = document.getElementById(tableId);
         const tbody = table.querySelector('tbody');
         
-        // Clear existing rows
-        tbody.innerHTML = '';
+        if (!this.appendMode) {
+            // Clear existing rows if not in append mode
+            tbody.innerHTML = '';
+        }
         
         // Add data rows
         for (let item of data) {
             const row = document.createElement('tr');
             row.innerHTML = `
+                <td class="serial-number"></td>
                 <td><input type="text" value="${this.formatDateForInput(item.date)}" class="date-input"></td>
                 <td><input type="number" value="${item.amount}" class="amount-input"></td>
                 <td>
@@ -242,8 +284,13 @@ class BankReconciliation {
             tbody.appendChild(row);
         }
         
-        // Add one empty row at the end
-        this.addRow(tableId);
+        // Update serial numbers
+        this.updateSerialNumbers(tableId);
+        
+        // Add one empty row at the end if not in append mode
+        if (!this.appendMode) {
+            this.addRow(tableId);
+        }
     }
 
     collectTableData(tableId) {
@@ -982,14 +1029,21 @@ class BankReconciliation {
 function deleteRow(button) {
     const row = button.closest('tr');
     const tbody = row.parentElement;
+    const table = tbody.closest('table');
     
     // Don't delete if it's the last row
     if (tbody.children.length > 1) {
         row.remove();
+        
+        // Update serial numbers after deletion
+        const tableId = table.id;
+        if (window.bankReconciliation) {
+            window.bankReconciliation.updateSerialNumbers(tableId);
+        }
     }
 }
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
-    new BankReconciliation();
+    window.bankReconciliation = new BankReconciliation();
 }); 

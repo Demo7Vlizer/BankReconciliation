@@ -27,6 +27,9 @@
                     <button id="pasteBankData" class="paste-btn">
                         <i class="fas fa-paste"></i> Paste Data
                     </button>
+                    <button id="pasteAppendBankData" class="paste-append-btn">
+                        <i class="fas fa-clipboard-list"></i> Paste & Append
+                    </button>
                     <button id="downloadBankData" class="download-btn">
                         <i class="fas fa-download"></i> Download Data
                     </button>
@@ -35,6 +38,7 @@
                     <table id="bankDataTable">
                         <thead>
                             <tr>
+                                <th>S.No.</th>
                                 <th>Date (DD/MM/YYYY)</th>
                                 <th>Amount (₹)</th>
                                 <th>Action</th>
@@ -42,6 +46,7 @@
                         </thead>
                         <tbody>
                             <tr>
+                                <td class="serial-number">1</td>
                                 <td><input type="text" placeholder="01/01/2024" class="date-input"></td>
                                 <td><input type="number" placeholder="50000" class="amount-input"></td>
                                 <td>
@@ -67,6 +72,9 @@
                     <button id="pasteTallyData" class="paste-btn">
                         <i class="fas fa-paste"></i> Paste Data
                     </button>
+                    <button id="pasteAppendTallyData" class="paste-append-btn">
+                        <i class="fas fa-clipboard-list"></i> Paste & Append
+                    </button>
                     <button id="downloadTallyData" class="download-btn">
                         <i class="fas fa-download"></i> Download Data
                     </button>
@@ -75,6 +83,7 @@
                     <table id="tallyDataTable">
                         <thead>
                             <tr>
+                                <th>S.No.</th>
                                 <th>Date (DD/MM/YYYY)</th>
                                 <th>Amount (₹)</th>
                                 <th>Action</th>
@@ -82,6 +91,7 @@
                         </thead>
                         <tbody>
                             <tr>
+                                <td class="serial-number">1</td>
                                 <td><input type="text" placeholder="01/01/2024" class="date-input"></td>
                                 <td><input type="number" placeholder="50000" class="amount-input"></td>
                                 <td>
@@ -236,6 +246,7 @@
             <div class="modal-body">
                 <p><strong>Paste your data here:</strong></p>
                 <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
+                    <strong>Mode:</strong> <span id="pasteModeInfo">Replace existing data</span><br>
                     Format: Date | Amount<br>
                     Date Formats Supported:<br>
                     • DD/MM/YYYY (e.g., 02/04/2024)<br>
