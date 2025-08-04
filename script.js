@@ -851,39 +851,135 @@ class BankReconciliation {
         const tbody = document.querySelector('#differencesTable tbody');
         tbody.innerHTML = '';
 
-        differences.forEach(match => {
-            const row = document.createElement('tr');
+        let totalBankAmount = 0;
+        let totalTallyAmount = 0;
+
+        console.log('Displaying differences:', differences.length, 'items');
+
+        // Display differences with individual transactions shown directly
+        differences.forEach((match, matchIndex) => {
             const difference = match.bankTotal - match.tallyTotal;
+            totalBankAmount += match.bankTotal;
+            totalTallyAmount += match.tallyTotal;
 
-            // Create tooltip content for transactions with multiple entries
-            let bankTooltip = '';
-            let tallyTooltip = '';
-            
-            if (match.bankTransactions.length > 1) {
-                bankTooltip = 'Bank Transactions:\n';
-                match.bankTransactions.forEach((transaction, index) => {
-                    bankTooltip += `${index + 1}. ${this.formatDate(transaction.date)}: ${this.formatAmount(transaction.amount)}\n`;
-                });
-                bankTooltip += `\nTotal: ${this.formatAmount(match.bankTotal)}`;
-            }
+            // Determine if this is a combined match (multiple transactions on one side)
+            const isCombinedMatch = match.bankTransactions.length > 1 || match.tallyTransactions.length > 1;
+            const matchType = isCombinedMatch ? 'combined' : 'direct';
 
+            console.log(`Match ${matchIndex + 1}:`, {
+                bankTransactions: match.bankTransactions.length,
+                tallyTransactions: match.tallyTransactions.length,
+                isCombinedMatch,
+                matchType,
+                bankTotal: match.bankTotal,
+                tallyTotal: match.tallyTotal
+            });
+
+            // Show individual bank transactions
+            match.bankTransactions.forEach((transaction, index) => {
+                const row = document.createElement('tr');
+                row.className = `difference-row ${matchType}-match`;
+                
+                console.log(`Creating row with classes:`, row.className);
+                
+                if (index === 0) {
+                    // First row shows the match info
+                    row.innerHTML = `
+                        <td>${this.formatDate(transaction.date)}</td>
+                        <td class="bank-amount ${matchType}-bank-amount">${this.formatAmount(transaction.amount)}</td>
+                        <td>${this.formatDate(match.tallyDate)}</td>
+                        <td class="tally-amount ${matchType}-tally-amount">${this.formatAmount(match.tallyTotal)}</td>
+                        <td class="difference-amount">${this.formatAmount(Math.abs(difference))}</td>
+                    `;
+                } else {
+                    // Additional bank transactions (if any)
+                    row.innerHTML = `
+                        <td>${this.formatDate(transaction.date)}</td>
+                        <td class="bank-amount ${matchType}-bank-amount">${this.formatAmount(transaction.amount)}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    `;
+                }
+                tbody.appendChild(row);
+            });
+
+            // Show individual tally transactions if there are multiple
             if (match.tallyTransactions.length > 1) {
-                tallyTooltip = 'Tally Transactions:\n';
                 match.tallyTransactions.forEach((transaction, index) => {
-                    tallyTooltip += `${index + 1}. ${this.formatDate(transaction.date)}: ${this.formatAmount(transaction.amount)}\n`;
+                    if (index > 0) { // Skip first one as it's already shown
+                        const row = document.createElement('tr');
+                        row.className = `difference-row ${matchType}-match`;
+                        row.innerHTML = `
+                            <td></td>
+                            <td></td>
+                            <td>${this.formatDate(transaction.date)}</td>
+                            <td class="tally-amount ${matchType}-tally-amount">${this.formatAmount(transaction.amount)}</td>
+                            <td></td>
+                        `;
+                        tbody.appendChild(row);
+                    }
                 });
-                tallyTooltip += `\nTotal: ${this.formatAmount(match.tallyTotal)}`;
             }
 
+            // Add a subtotal row for this match
+            if (match.bankTransactions.length > 1 || match.tallyTransactions.length > 1) {
+                const subtotalRow = document.createElement('tr');
+                subtotalRow.className = `subtotal-row ${matchType}-subtotal`;
+                subtotalRow.innerHTML = `
+                    <td><strong>Subtotal</strong></td>
+                    <td class="bank-subtotal ${matchType}-bank-subtotal"><strong>${this.formatAmount(match.bankTotal)}</strong></td>
+                    <td></td>
+                    <td class="tally-subtotal ${matchType}-tally-subtotal"><strong>${this.formatAmount(match.tallyTotal)}</strong></td>
+                    <td class="difference-subtotal"><strong>${this.formatAmount(Math.abs(difference))}</strong></td>
+                `;
+                tbody.appendChild(subtotalRow);
+            }
+        });
+
+        // Display unmatched transactions
+        this.unmatchedBankTransactions.forEach(transaction => {
+            totalBankAmount += transaction.amount;
+            const row = document.createElement('tr');
+            row.className = 'unmatched-row';
             row.innerHTML = `
-                <td>${this.formatDate(match.bankDate)}</td>
-                <td class="${bankTooltip ? 'tooltip' : ''}" data-tooltip="${bankTooltip}">${this.formatAmount(match.bankTotal)} (${match.bankTransactions.length} transactions)</td>
-                <td>${this.formatDate(match.tallyDate)}</td>
-                <td class="${tallyTooltip ? 'tooltip' : ''}" data-tooltip="${tallyTooltip}">${this.formatAmount(match.tallyTotal)} (${match.tallyTransactions.length} transactions)</td>
-                <td class="${difference > 0 ? 'amount-debit' : 'amount-credit'}">${this.formatAmount(Math.abs(difference))}</td>
+                <td>${this.formatDate(transaction.date)}</td>
+                <td class="unmatched-bank">${this.formatAmount(transaction.amount)}</td>
+                <td></td>
+                <td></td>
+                <td class="unmatched-amount">${this.formatAmount(transaction.amount)}</td>
             `;
             tbody.appendChild(row);
         });
+
+        this.unmatchedTallyTransactions.forEach(transaction => {
+            totalTallyAmount += transaction.amount;
+            const row = document.createElement('tr');
+            row.className = 'unmatched-row';
+            row.innerHTML = `
+                <td></td>
+                <td></td>
+                <td>${this.formatDate(transaction.date)}</td>
+                <td class="unmatched-tally">${this.formatAmount(transaction.amount)}</td>
+                <td class="unmatched-amount">${this.formatAmount(transaction.amount)}</td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // Add summary row at the bottom
+        const summaryRow = document.createElement('tr');
+        summaryRow.className = 'summary-row';
+        const totalDifference = totalBankAmount - totalTallyAmount;
+        summaryRow.innerHTML = `
+            <td><strong>Total</strong></td>
+            <td class="total-bank"><strong>${this.formatAmount(totalBankAmount)}</strong></td>
+            <td></td>
+            <td class="total-tally"><strong>${this.formatAmount(totalTallyAmount)}</strong></td>
+            <td class="total-difference"><strong>${this.formatAmount(Math.abs(totalDifference))}</strong></td>
+        `;
+        tbody.appendChild(summaryRow);
+
+        console.log('Differences display completed. Total rows created:', tbody.children.length);
     }
 
     switchTab(tabName) {
